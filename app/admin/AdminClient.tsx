@@ -1,141 +1,162 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Trash2 } from 'lucide-react'
-import type { UserProfile, Permission, Resource, Action, Role } from '@/lib/supabase/types'
-import { ROLE_DEFAULTS } from '@/lib/supabase/types'
+import { Plus, ChevronRight, UserPlus } from 'lucide-react'
+import Link from 'next/link'
+import type { UserProfile, Role } from '@/lib/supabase/types'
+import { formatDate } from '@/lib/utils'
 
-interface Props { users: UserProfile[]; permissions: Permission[]; currentUserId: string }
-type PermMap = Record<string, Record<string, Record<string, boolean | null>>>
-
-const RESOURCES: Resource[] = ['incidents', 'tracker', 'documents', 'users', 'admin']
-const ACTIONS: Action[] = ['view', 'view_sensitive', 'create', 'edit', 'delete', 'manage_users', 'manage_invites']
-
-function buildPermMap(permissions: Permission[]): PermMap {
-  const map: PermMap = {}
-  for (const p of permissions) {
-    if (!map[p.user_id]) map[p.user_id] = {}
-    if (!map[p.user_id][p.resource]) map[p.user_id][p.resource] = {}
-    map[p.user_id][p.resource][p.action] = p.granted
-  }
-  return map
+interface Props {
+  users: UserProfile[]
+  currentUserId: string
 }
 
-function roleDefault(role: Role, resource: Resource, action: Action): boolean {
-  return ROLE_DEFAULTS[role]?.[resource]?.includes(action) ?? false
+const ROLE_COLORS: Record<Role, string> = {
+  admin: 'text-red-700',
+  counsellor: 'text-amber-700',
+  viewer: 'text-zinc-500',
 }
 
-export default function AdminClient({ users: initialUsers, permissions, currentUserId }: Props) {
+export default function AdminClient({ users: initialUsers, currentUserId }: Props) {
   const [users, setUsers] = useState(initialUsers)
-  const [permMap, setPermMap] = useState<PermMap>(buildPermMap(permissions))
-  const [toggling, setToggling] = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [email, setEmail] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [password, setPassword] = useState('')
+  const [role, setRole] = useState<Role>('viewer')
+  const [creating, setCreating] = useState(false)
 
-  async function togglePermission(user: UserProfile, resource: Resource, action: Action) {
-    const key = `${user.id}-${resource}-${action}`
-    setToggling(key)
-    const current = permMap[user.id]?.[resource]?.[action] ?? null
-    const def = roleDefault(user.role, resource, action)
-    let next: boolean | null
-    if (current === null) next = !def
-    else if (current === true) next = false
-    else next = null
-    const supabase = createClient()
-    if (next === null) {
-      await supabase.from('permissions').delete().eq('user_id', user.id).eq('resource', resource).eq('action', action)
-    } else {
-      await supabase.from('permissions').upsert({ user_id: user.id, resource, action, granted: next }, { onConflict: 'user_id,resource,action' })
-    }
-    setPermMap(prev => {
-      const updated = { ...prev }
-      if (!updated[user.id]) updated[user.id] = {}
-      if (!updated[user.id][resource]) updated[user.id][resource] = {}
-      if (next === null) delete updated[user.id][resource][action]
-      else updated[user.id][resource][action] = next
-      return updated
+  async function createUser(e: React.FormEvent) {
+    e.preventDefault()
+    setCreating(true)
+    const res = await fetch('/api/admin/create-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, display_name: displayName, password, role }),
     })
-    setToggling(null)
-  }
-
-  async function changeRole(user: UserProfile, newRole: Role) {
-    const supabase = createClient()
-    const { error } = await supabase.from('users').update({ role: newRole }).eq('id', user.id)
-    if (error) { toast.error('Failed.'); return }
-    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: newRole } : u))
-    toast.success(`Role updated to ${newRole}.`)
-  }
-
-  async function deleteUser(user: UserProfile) {
-    if (user.id === currentUserId) { toast.error("Can't delete yourself."); return }
-    if (!confirm(`Delete user "${user.display_name}"? This cannot be undone.`)) return
-    const supabase = createClient()
-    await supabase.from('users').delete().eq('id', user.id)
-    setUsers(prev => prev.filter(u => u.id !== user.id))
-    toast.success('User deleted.')
+    const data = await res.json()
+    setCreating(false)
+    if (!res.ok) { toast.error(data.error || 'Failed to create user'); return }
+    setUsers(prev => [...prev, data])
+    setEmail(''); setDisplayName(''); setPassword(''); setRole('viewer')
+    setShowForm(false)
+    toast.success(`${data.display_name} created.`)
   }
 
   return (
-    <div className="space-y-8">
-      {users.map(user => {
-        const isMe = user.id === currentUserId
-        return (
-          <div key={user.id} className="border border-zinc-800 bg-zinc-950 p-5">
-            <div className="flex items-center justify-between mb-5">
+    <div className="space-y-4">
+      {/* Create user form */}
+      {showForm ? (
+        <div className="border border-zinc-700 bg-zinc-950 p-5">
+          <p className="text-[10px] tracking-widest uppercase font-mono text-zinc-500 mb-4">New User</p>
+          <form onSubmit={createUser} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] tracking-widest text-zinc-600 uppercase font-mono">Display Name</label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={e => setDisplayName(e.target.value)}
+                  required
+                  className="w-full bg-black border border-zinc-800 text-zinc-200 px-3 py-2 text-sm font-mono focus:outline-none focus:border-zinc-600 transition-colors"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] tracking-widest text-zinc-600 uppercase font-mono">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  className="w-full bg-black border border-zinc-800 text-zinc-200 px-3 py-2 text-sm font-mono focus:outline-none focus:border-zinc-600 transition-colors"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] tracking-widest text-zinc-600 uppercase font-mono">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  className="w-full bg-black border border-zinc-800 text-zinc-200 px-3 py-2 text-sm font-mono focus:outline-none focus:border-zinc-600 transition-colors"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] tracking-widest text-zinc-600 uppercase font-mono">Role</label>
+                <select
+                  value={role}
+                  onChange={e => setRole(e.target.value as Role)}
+                  className="w-full bg-black border border-zinc-800 text-zinc-200 px-3 py-2 text-sm font-mono focus:outline-none"
+                >
+                  <option value="viewer">viewer</option>
+                  <option value="counsellor">counsellor</option>
+                  <option value="admin">admin</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                type="submit"
+                disabled={creating}
+                className="flex items-center gap-2 px-4 py-2 border border-zinc-700 text-zinc-400 hover:border-zinc-500 text-[11px] font-mono tracking-widest uppercase transition-colors disabled:opacity-40"
+              >
+                <UserPlus className="w-3 h-3" />
+                {creating ? 'Creating...' : 'Create User'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="text-zinc-600 hover:text-zinc-400 text-[11px] font-mono tracking-widest uppercase transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2 px-4 py-2 border border-zinc-700 text-zinc-400 hover:border-zinc-500 text-[11px] font-mono tracking-widest uppercase transition-colors"
+        >
+          <Plus className="w-3 h-3" />
+          Add User
+        </button>
+      )}
+
+      {/* User list */}
+      <div className="space-y-1">
+        {users.map(user => {
+          const isMe = user.id === currentUserId
+          return (
+            <Link
+              key={user.id}
+              href={`/admin/users/${user.id}`}
+              className="flex items-center justify-between border border-zinc-800 bg-zinc-950 px-5 py-4 hover:border-zinc-700 transition-colors group"
+            >
               <div>
-                <p className="text-sm font-mono text-zinc-300">{user.display_name} {isMe && <span className="text-[9px] text-zinc-600">(you)</span>}</p>
-                <p className="text-[10px] font-mono text-zinc-600 mt-0.5">{user.id.slice(0, 8)}…</p>
+                <p className="text-sm font-mono text-zinc-300">
+                  {user.display_name}
+                  {isMe && <span className="ml-2 text-[9px] text-zinc-600">(you)</span>}
+                </p>
+                <p className="text-[10px] font-mono text-zinc-600 mt-0.5">
+                  Joined {formatDate(user.created_at)}
+                </p>
               </div>
-              <div className="flex items-center gap-3">
-                {!isMe && (
-                  <select value={user.role} onChange={e => changeRole(user, e.target.value as Role)} className="bg-zinc-900 border border-zinc-700 text-zinc-300 text-[11px] font-mono px-2 py-1 focus:outline-none" disabled={user.role === 'admin'}>
-                    <option value="viewer">viewer</option>
-                    <option value="counsellor">counsellor</option>
-                    <option value="admin">admin</option>
-                  </select>
-                )}
-                {!isMe && <button onClick={() => deleteUser(user)} className="p-1.5 text-red-900 hover:text-red-700 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>}
+              <div className="flex items-center gap-4">
+                <span className={`text-[11px] font-mono tracking-widest uppercase ${ROLE_COLORS[user.role]}`}>
+                  {user.role}
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 text-zinc-700 group-hover:text-zinc-500 transition-colors" />
               </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-[10px] font-mono">
-                <thead>
-                  <tr>
-                    <th className="text-left text-zinc-600 pb-2 pr-4 tracking-widest uppercase w-24">Resource</th>
-                    {ACTIONS.map(a => <th key={a} className="text-center text-zinc-600 pb-2 px-1 tracking-widest uppercase whitespace-nowrap">{a.replace('_', ' ')}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {RESOURCES.map(resource => (
-                    <tr key={resource} className="border-t border-zinc-800/50">
-                      <td className="py-2 pr-4 text-zinc-500 tracking-widest uppercase">{resource}</td>
-                      {ACTIONS.map(action => {
-                        const override = permMap[user.id]?.[resource]?.[action] ?? null
-                        const def = roleDefault(user.role, resource, action)
-                        const effective = override !== null ? override : def
-                        const isOverride = override !== null
-                        const key = `${user.id}-${resource}-${action}`
-                        return (
-                          <td key={action} className="py-2 px-1 text-center">
-                            {isMe ? <span className="text-green-800">✓</span> : (
-                              <button onClick={() => togglePermission(user, resource, action)} disabled={toggling === key}
-                                title={isOverride ? `Override: ${effective ? 'granted' : 'denied'}` : `Role default: ${effective ? 'granted' : 'denied'}`}
-                                className={`w-6 h-6 border transition-colors ${effective ? (isOverride ? 'border-green-800 bg-green-950/50 text-green-700' : 'border-zinc-700 bg-zinc-800/50 text-zinc-500') : (isOverride ? 'border-red-900 bg-red-950/30 text-red-800' : 'border-zinc-800 text-zinc-700')}`}>
-                                {effective ? '✓' : '−'}
-                              </button>
-                            )}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="text-[9px] font-mono text-zinc-700 mt-3">Bright green = explicit grant override · Red = explicit deny override · Muted = role default</p>
-          </div>
-        )
-      })}
+            </Link>
+          )
+        })}
+        {users.length === 0 && (
+          <p className="text-sm text-zinc-700 font-mono py-8 text-center">No users.</p>
+        )}
+      </div>
     </div>
   )
 }
