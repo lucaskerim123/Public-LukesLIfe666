@@ -29,7 +29,6 @@ export default async function IncidentsPage() {
             </Link>
           )}
         </div>
-
         <div className="space-y-2">
           {incidents?.map(inc => (
             <Link key={inc.id} href={`/incidents/${inc.id}`}>
@@ -41,9 +40,7 @@ export default async function IncidentsPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 ml-4 shrink-0">
-                  {inc.is_sensitive && (
-                    <span className="text-[9px] font-mono text-red-800 tracking-widest uppercase">Sensitive</span>
-                  )}
+                  {inc.is_sensitive && <span className="text-[9px] font-mono text-red-800 tracking-widest uppercase">Sensitive</span>}
                   <span className={`text-[10px] font-mono px-2 py-0.5 ${inc.severity >= 7 ? 'text-red-700 bg-red-950/40' : inc.severity >= 4 ? 'text-amber-700 bg-amber-950/40' : 'text-zinc-500 bg-zinc-800'}`}>
                     SEV {inc.severity}
                   </span>
@@ -51,9 +48,7 @@ export default async function IncidentsPage() {
               </div>
             </Link>
           ))}
-          {!incidents?.length && (
-            <p className="text-sm text-zinc-700 font-mono py-8 text-center">No incidents recorded.</p>
-          )}
+          {!incidents?.length && <p className="text-sm text-zinc-700 font-mono py-8 text-center">No incidents recorded.</p>}
         </div>
       </main>
     </AppShell>

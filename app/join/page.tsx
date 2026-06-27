@@ -10,7 +10,6 @@ function JoinForm() {
   const urlToken = searchParams.get('token')
   const router = useRouter()
 
-  // Step: 'enter-code' | 'validating' | 'register' | 'error'
   const [step, setStep] = useState<'enter-code' | 'validating' | 'register' | 'error'>(urlToken ? 'validating' : 'enter-code')
   const [token, setToken] = useState(urlToken ?? '')
   const [codeInput, setCodeInput] = useState('')
@@ -51,19 +50,15 @@ function JoinForm() {
     e.preventDefault()
     if (password !== confirm) { setError('Passphrases do not match.'); return }
     if (password.length < 8) { setError('Passphrase must be at least 8 characters.'); return }
-
     setSubmitting(true)
     setError('')
-
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { display_name: displayName, invite_token: token } },
     })
-
     if (error) { setError(error.message); setSubmitting(false); return }
-
     router.push('/login?joined=1')
   }
 

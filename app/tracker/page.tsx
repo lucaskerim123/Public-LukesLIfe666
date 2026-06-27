@@ -28,7 +28,6 @@ export default async function TrackerPage() {
             </Link>
           )}
         </div>
-
         <div className="space-y-2">
           {sessions?.map(s => (
             <Link key={s.id} href={`/tracker/${s.id}`}>
@@ -39,9 +38,7 @@ export default async function TrackerPage() {
                       {!s.date_end ? `ONGOING – DAY ${daysUp(s.date_start)}` : `DAY ${daysUp(s.date_start, s.date_end)}`}
                     </span>
                   </div>
-                  <p className="text-xs font-mono text-zinc-500">
-                    {formatDate(s.date_start)} {s.date_end ? `→ ${formatDate(s.date_end)}` : '→ present'}
-                  </p>
+                  <p className="text-xs font-mono text-zinc-500">{formatDate(s.date_start)} {s.date_end ? `→ ${formatDate(s.date_end)}` : '→ present'}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-mono text-zinc-400">{s.sleep_hours}h sleep</p>
@@ -50,9 +47,7 @@ export default async function TrackerPage() {
               </div>
             </Link>
           ))}
-          {!sessions?.length && (
-            <p className="text-sm text-zinc-700 font-mono py-8 text-center">No sessions recorded.</p>
-          )}
+          {!sessions?.length && <p className="text-sm text-zinc-700 font-mono py-8 text-center">No sessions recorded.</p>}
         </div>
       </main>
     </AppShell>

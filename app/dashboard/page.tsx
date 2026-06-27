@@ -28,7 +28,6 @@ export default async function DashboardPage() {
           <p className="text-xs text-zinc-600 font-mono mt-1">{formatDate(new Date().toISOString())}</p>
         </div>
 
-        {/* Active tracker session banner */}
         {ongoingSession && (
           <Link href={`/tracker/${ongoingSession.id}`}>
             <div className="border border-amber-900/40 bg-amber-950/10 p-4 mb-6 flex items-center justify-between hover:border-amber-700/40 transition-colors">
@@ -36,9 +35,7 @@ export default async function DashboardPage() {
                 <Pill className="w-4 h-4 text-amber-700" />
                 <div>
                   <p className="text-xs font-mono text-amber-600 tracking-wide">Active Session</p>
-                  <p className="text-sm font-mono text-zinc-300">
-                    Day {daysUp(ongoingSession.date_start)} · {ongoingSession.sleep_hours}h sleep recorded
-                  </p>
+                  <p className="text-sm font-mono text-zinc-300">Day {daysUp(ongoingSession.date_start)} · {ongoingSession.sleep_hours}h sleep recorded</p>
                 </div>
               </div>
               <span className="text-[10px] font-mono text-amber-700 tracking-widest uppercase">View →</span>
@@ -47,7 +44,6 @@ export default async function DashboardPage() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Recent Incidents */}
           <div className="border border-zinc-800 bg-zinc-950 p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -65,9 +61,7 @@ export default async function DashboardPage() {
                     <div className="border border-zinc-800 hover:border-zinc-700 px-3 py-2.5 transition-colors">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-mono text-zinc-400">{formatDate(inc.occurred_at)}</span>
-                        <span className={`text-[10px] font-mono px-1.5 py-0.5 ${inc.severity >= 7 ? 'text-red-700 bg-red-950/30' : inc.severity >= 4 ? 'text-amber-700 bg-amber-950/30' : 'text-zinc-500 bg-zinc-800'}`}>
-                          SEV {inc.severity}
-                        </span>
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 ${inc.severity >= 7 ? 'text-red-700 bg-red-950/30' : inc.severity >= 4 ? 'text-amber-700 bg-amber-950/30' : 'text-zinc-500 bg-zinc-800'}`}>SEV {inc.severity}</span>
                       </div>
                       <p className="text-xs text-zinc-500 font-mono mt-1 truncate">
                         {inc.is_sensitive && !canViewSensitive ? '[Restricted]' : inc.description}
@@ -81,7 +75,6 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          {/* Recent Tracker Sessions */}
           <div className="border border-zinc-800 bg-zinc-950 p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -98,12 +91,8 @@ export default async function DashboardPage() {
                   <Link key={s.id} href={`/tracker/${s.id}`}>
                     <div className="border border-zinc-800 hover:border-zinc-700 px-3 py-2.5 transition-colors">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono text-zinc-400">
-                          {formatDate(s.date_start)} {s.date_end ? `→ ${formatDate(s.date_end)}` : '→ ongoing'}
-                        </span>
-                        <span className={`text-[10px] font-mono px-1.5 py-0.5 ${!s.date_end ? 'text-amber-700 bg-amber-950/30' : 'text-zinc-500 bg-zinc-800'}`}>
-                          DAY {daysUp(s.date_start, s.date_end)}
-                        </span>
+                        <span className="text-xs font-mono text-zinc-400">{formatDate(s.date_start)} {s.date_end ? `→ ${formatDate(s.date_end)}` : '→ ongoing'}</span>
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 ${!s.date_end ? 'text-amber-700 bg-amber-950/30' : 'text-zinc-500 bg-zinc-800'}`}>DAY {daysUp(s.date_start, s.date_end)}</span>
                       </div>
                       <p className="text-xs text-zinc-500 font-mono mt-1">{s.sleep_hours}h sleep · {s.any_incidents ? 'Incidents logged' : 'No incidents'}</p>
                     </div>
