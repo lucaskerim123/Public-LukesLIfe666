@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "tracker": {
-      "command": "node_modules/.bin/tsx",
-      "args": ["mcp-server/tracker-mcp.ts"]
-    },
     "mental-health-incident-system": {
       "command": "python3",
       "args": ["mcp/his-py/server.py"]
