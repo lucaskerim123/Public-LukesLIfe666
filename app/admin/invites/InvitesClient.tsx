@@ -18,14 +18,19 @@ function generateToken(): string {
   return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('')
 }
 
-function inviteMessage(url: string) {
-  return `ACCESS DROP — PRIVATE ENTRY
+function inviteMessage(url: string, token: string) {
+  const siteUrl = window.location.origin
 
-A door has been left for you.
+  return `PRIVATE ENTRY
 
-Go to Luke's tracker. Do not enter through the front. Use the padlock. When it asks for access, place this invite there.
+A door has been left ajar.
 
-This link is temporary. Keep it quiet.
+Seek Luke's tracker: ${siteUrl}
+Use the padlock entry. When it asks for the key, place the code in the space carved for it.
+
+Thy code: ${token}
+
+This passage is fleeting.
 
 If all else fails, please use the URL:
 ${url}`
@@ -60,7 +65,7 @@ export default function InvitesClient({ invites: initialInvites, adminId }: Prop
 
   function copyLink(token: string) {
     const url = `${window.location.origin}/join?token=${token}`
-    navigator.clipboard.writeText(inviteMessage(url))
+    navigator.clipboard.writeText(inviteMessage(url, token))
     toast.success('Invite message copied.')
   }
 
