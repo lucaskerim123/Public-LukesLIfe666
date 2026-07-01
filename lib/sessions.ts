@@ -1,3 +1,4 @@
+import { canViewFieldLevel } from '@/lib/field-visibility'
 import type { DrugTrackerSession, FieldVisibilityLevel, Role, SessionFieldKey, SessionFieldVisibility } from '@/lib/supabase/types'
 
 export const REDACTED = 'REDACTED'
@@ -36,11 +37,7 @@ export function normalizeSessionVisibility(visibility: SessionFieldVisibility | 
 }
 
 export function canViewVisibilityLevel(role: Role, level: FieldVisibilityLevel) {
-  if (role === 'owner' || role === 'admin') return true
-  if (level === 'viewer+') return true
-  if (level === 'lawyer+') return role === 'lawyer'
-  if (level === 'counsellor+') return role === 'counsellor'
-  return false
+  return canViewFieldLevel(role, level)
 }
 
 export function canViewSessionField(role: Role, session: Pick<DrugTrackerSession, 'field_visibility'>, field: SessionFieldKey) {
