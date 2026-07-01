@@ -17,10 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark">
       <body className={`${spaceGrotesk.className} antialiased min-h-screen bg-background`}>
         <style>{`
+          .tracker-detail-page p.text-sm.font-mono.text-zinc-400::before,
           .tracker-detail-page p.text-sm.font-mono.text-zinc-400::after {
-            content: 'REDACTED' !important;
-            text-shadow: none !important;
-            letter-spacing: 0.35em !important;
+            opacity: 0 !important;
           }
         `}</style>
         <InactivityLogout />
