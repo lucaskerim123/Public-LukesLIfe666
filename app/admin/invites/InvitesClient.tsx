@@ -21,31 +21,19 @@ function generateToken(): string {
 function inviteMessage(url: string, token: string) {
   const siteUrl = window.location.origin
 
-  return `ACCESS DROP - PRIVATE ENTRY
+  return `"Not all doors are seen-only found by those who know where not to look."
 
-The vault stirs... but it does not welcome the unworthy.
-What you seek is not behind the door you see - it waits beneath the one you overlook.
+A door stands ajar. It was not meant for all eyes.
+Seek Luke's tracker: ${siteUrl} - but do not approach as others would.
+The front is watched.
 
-Luke's tracker is sealed beyond: ${siteUrl}
+Where iron sleeps, a lock awaits. When it whispers for its key, answer in the place carved for it.
 
-The first door is not opened by the path in front of you.
-Look for what the vault hides in plain sight.
+Thy code: ${token}
 
-Wake the mechanism.
+This passage is fleeting. Speak of it to none.
 
-When the door gives way, do not stop there.
-The real entry is guarded by the seal.
-
-Press the lock.
-Let the hidden panel surface.
-
-When it asks for proof, enter the code.
-
-CODE: ${token}
-
-This access is temporary. Keep it quiet.
-
-If the vault refuses you, use the fallback:
+Should the path collapse, fall back to this:
 ${url}`
 }
 
@@ -63,8 +51,12 @@ export default function InvitesClient({ invites: initialInvites, adminId }: Prop
     const { error, data } = await supabase.from('invites').insert({
       token, created_by: adminId, role_to_assign: role, expires_at,
     }).select().single()
-    if (error) { toast.error('Failed: ' + error.message) }
-    else { setInvites(prev => [data, ...prev]); toast.success('Invite created.') }
+    if (error) {
+      toast.error('Failed: ' + error.message)
+    } else {
+      setInvites(prev => [data, ...prev])
+      toast.success('Invite created.')
+    }
     setCreating(false)
   }
 
@@ -84,28 +76,40 @@ export default function InvitesClient({ invites: initialInvites, adminId }: Prop
 
   return (
     <div>
-      <div className="border border-zinc-800 bg-zinc-950 p-5 mb-6">
-        <p className="text-[10px] tracking-widest uppercase font-mono text-zinc-500 mb-4">New Invite</p>
-        <div className="flex items-center gap-4 flex-wrap">
+      <div className="mb-6 border border-zinc-800 bg-zinc-950 p-5">
+        <p className="mb-4 font-mono text-[10px] uppercase tracking-widest text-zinc-500">New Invite</p>
+        <div className="flex flex-wrap items-center gap-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-zinc-600 tracking-widest uppercase">Role</label>
-            <select value={role} onChange={e => setRole(e.target.value as Role)} className="bg-zinc-900 border border-zinc-700 text-zinc-300 text-[11px] font-mono px-3 py-2 focus:outline-none">
+            <label className="font-mono text-[10px] uppercase tracking-widest text-zinc-600">Role</label>
+            <select
+              value={role}
+              onChange={e => setRole(e.target.value as Role)}
+              className="border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-[11px] text-zinc-300 focus:outline-none"
+            >
               <option value="viewer">viewer</option>
               <option value="lawyer">lawyer</option>
               <option value="counsellor">counsellor</option>
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-zinc-600 tracking-widest uppercase">Expires in</label>
-            <select value={expiryDays} onChange={e => setExpiryDays(Number(e.target.value))} className="bg-zinc-900 border border-zinc-700 text-zinc-300 text-[11px] font-mono px-3 py-2 focus:outline-none">
+            <label className="font-mono text-[10px] uppercase tracking-widest text-zinc-600">Expires in</label>
+            <select
+              value={expiryDays}
+              onChange={e => setExpiryDays(Number(e.target.value))}
+              className="border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-[11px] text-zinc-300 focus:outline-none"
+            >
               <option value={1}>1 day</option>
               <option value={3}>3 days</option>
               <option value={7}>7 days</option>
               <option value={30}>30 days</option>
             </select>
           </div>
-          <button onClick={createInvite} disabled={creating} className="flex items-center gap-2 mt-5 px-4 py-2 border border-zinc-700 text-zinc-400 hover:border-zinc-500 text-[11px] font-mono tracking-widest uppercase transition-colors disabled:opacity-40">
-            <Plus className="w-3 h-3" />
+          <button
+            onClick={createInvite}
+            disabled={creating}
+            className="mt-5 flex items-center gap-2 border border-zinc-700 px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-zinc-400 transition-colors hover:border-zinc-500 disabled:opacity-40"
+          >
+            <Plus className="h-3 w-3" />
             {creating ? 'Creating...' : 'Generate Link'}
           </button>
         </div>
@@ -115,23 +119,40 @@ export default function InvitesClient({ invites: initialInvites, adminId }: Prop
           const expired = new Date(invite.expires_at) < new Date()
           const used = !!invite.used_by
           return (
-            <div key={invite.id} className={`border px-4 py-3 flex items-center justify-between ${used ? 'border-zinc-800/50 opacity-50' : expired ? 'border-red-900/20' : 'border-zinc-800'} bg-zinc-950`}>
+            <div
+              key={invite.id}
+              className={`border px-4 py-3 flex items-center justify-between ${used ? 'border-zinc-800/50 opacity-50' : expired ? 'border-red-900/20' : 'border-zinc-800'} bg-zinc-950`}
+            >
               <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-xs font-mono text-zinc-400">{invite.role_to_assign}</span>
-                  {used && <span className="text-[9px] font-mono text-zinc-600 tracking-widest uppercase">Used</span>}
-                  {expired && !used && <span className="text-[9px] font-mono text-red-800 tracking-widest uppercase">Expired</span>}
+                <div className="mb-0.5 flex items-center gap-2">
+                  <span className="font-mono text-xs text-zinc-400">{invite.role_to_assign}</span>
+                  {used && <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-600">Used</span>}
+                  {expired && !used && <span className="font-mono text-[9px] uppercase tracking-widest text-red-800">Expired</span>}
                 </div>
-                <p className="text-[10px] font-mono text-zinc-600">Expires {formatDateTime(invite.expires_at)} · {invite.token.slice(0, 12)}...</p>
+                <p className="font-mono text-[10px] text-zinc-600">
+                  Expires {formatDateTime(invite.expires_at)} - {invite.token.slice(0, 12)}...
+                </p>
               </div>
               <div className="flex items-center gap-2">
-                {!used && !expired && <button onClick={() => copyLink(invite.token)} className="p-2 text-zinc-500 hover:text-zinc-300 transition-colors"><Copy className="w-3.5 h-3.5" /></button>}
-                <button onClick={() => deleteInvite(invite)} className="p-2 text-red-900 hover:text-red-700 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>}
+                {!used && !expired && (
+                  <button
+                    onClick={() => copyLink(invite.token)}
+                    className="p-2 text-zinc-500 transition-colors hover:text-zinc-300"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                <button
+                  onClick={() => deleteInvite(invite)}
+                  className="p-2 text-red-900 transition-colors hover:text-red-700"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
           )
         })}
-        {!invites.length && <p className="text-sm text-zinc-700 font-mono py-8 text-center">No invites.</p>}
+        {!invites.length && <p className="py-8 text-center font-mono text-sm text-zinc-700">No invites.</p>}
       </div>
     </div>
   )
