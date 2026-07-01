@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import AppShell from '@/components/layout/AppShell'
 import UserDetail from './UserDetail'
 import Link from 'next/link'
+import { parseRolePermissions } from '@/lib/role-permissions'
 
 export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -19,13 +20,16 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
     { data: user },
     { data: permissions },
     { data: authData },
+    { data: configRows },
   ] = await Promise.all([
     supabase.from('users').select('*').eq('id', id).single(),
     supabase.from('permissions').select('*').eq('user_id', id),
     admin.auth.admin.getUserById(id),
+    admin.from('site_config').select('key, value').eq('key', 'role_permissions').maybeSingle(),
   ])
 
   if (!user) notFound()
+  const rolePermissions = parseRolePermissions(configRows?.value ?? null)
 
   return (
     <AppShell role={profile.role} displayName={profile.display_name}>
@@ -35,7 +39,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
           <span className="text-zinc-700">/</span>
           <h1 className="text-lg font-mono tracking-widest text-zinc-300 uppercase">User</h1>
         </div>
-        <UserDetail user={user} email={authData?.user?.email ?? ''} permissions={permissions ?? []} currentUserId={profile.id} />
+        <UserDetail user={user} email={authData?.user?.email ?? ''} permissions={permissions ?? []} currentUserId={profile.id} rolePermissions={rolePermissions} />
       </main>
     </AppShell>
   )

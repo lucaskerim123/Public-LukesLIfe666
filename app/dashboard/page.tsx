@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getProfile } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import AppShell from '@/components/layout/AppShell'
 import { formatDate, daysUp } from '@/lib/utils'
 import { Activity, Pill } from 'lucide-react'
@@ -8,19 +9,27 @@ import Link from 'next/link'
 import { incidentLabel, visibleIncidentText } from '@/lib/incidents'
 import { sessionLabel } from '@/lib/sessions'
 import type { MentalHealthIncident } from '@/lib/supabase/types'
+import LockdownShortcut from './LockdownShortcut'
 
 export default async function DashboardPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
 
   const supabase = await createClient()
+  const admin = createAdminClient()
 
-  const [{ data: incidents }, { data: sessions }] = await Promise.all([
+  const [{ data: incidents }, { data: sessions }, { data: configRows }] = await Promise.all([
     supabase.from('mental_health_incidents').select('*').order('occurred_at', { ascending: false }).limit(5),
     supabase.from('drug_tracker_sessions').select('*').order('created_at', { ascending: false }).limit(5),
+    profile.role === 'admin'
+      ? admin.from('site_config').select('key, value').in('key', ['lockdown_mode', 'lockdown_pin_hash'])
+      : Promise.resolve({ data: [] as { key: string; value: string | null }[] }),
   ])
 
   const ongoingSession = sessions?.find(s => !s.date_end) ?? null
+  const config = Object.fromEntries((configRows ?? []).map(r => [r.key, r.value ?? '']))
+  const lockdownActive = config.lockdown_mode === 'true'
+  const hasPin = !!config.lockdown_pin_hash
   return (
     <AppShell role={profile.role} displayName={profile.display_name}>
       <main className="max-w-6xl mx-auto px-4 py-8 min-w-0 overflow-hidden">
@@ -28,6 +37,8 @@ export default async function DashboardPage() {
           <h1 className="text-lg font-mono tracking-widest text-zinc-300 uppercase break-words [overflow-wrap:anywhere]">Dashboard</h1>
           <p className="text-xs text-zinc-600 font-mono mt-1 break-words [overflow-wrap:anywhere]">{formatDate(new Date().toISOString())}</p>
         </div>
+
+        {profile.role === 'admin' && <div className="mb-6"><LockdownShortcut hasPin={hasPin} active={lockdownActive} /></div>}
 
         {ongoingSession && (
           <Link href={`/tracker/${ongoingSession.id}`} className="block min-w-0 max-w-full">

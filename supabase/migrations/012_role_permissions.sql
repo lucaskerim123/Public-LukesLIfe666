@@ -1,0 +1,3 @@
+insert into site_config (key, value) values
+  ('role_permissions', '{"viewer":{"incidents":["view"],"tracker":["view"],"documents":["view"]},"lawyer":{"incidents":["view","view_sensitive"],"tracker":["view","view_sensitive"],"documents":["view","view_sensitive"]},"counsellor":{"incidents":["view","view_sensitive"],"tracker":["view","view_sensitive"],"documents":["view","view_sensitive"]},"admin":{"incidents":["view","view_sensitive","create","edit","delete"],"tracker":["view","view_sensitive","create","edit","delete"],"documents":["view","view_sensitive","create","edit","delete"],"users":["manage_users","manage_invites"],"admin":["view"]}}')
+on conflict (key) do nothing;

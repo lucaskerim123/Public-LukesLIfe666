@@ -73,6 +73,9 @@ export async function proxy(request: NextRequest) {
 
   // Auth check
   const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = user
+    ? await adminClient.from('users').select('role').eq('id', user.id).maybeSingle()
+    : { data: null as { role?: string | null } | null }
 
   const publicPaths = ['/login', '/join', '/setup', '/api/setup', '/lockdown', '/unlock', '/banned', '/api/lockdown']
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
@@ -94,6 +97,15 @@ export async function proxy(request: NextRequest) {
         if (pathname === '/login') return supabaseResponse
         return NextResponse.redirect(new URL('/banned', request.url))
       }
+    }
+
+    const isAdmin = profile?.role === 'admin'
+    if (!isAdmin && !isLockdownExempt && lockdownRow?.value === 'true') {
+      return NextResponse.redirect(new URL('/lockdown', request.url))
+    }
+
+    if (isAdmin && pathname === '/lockdown') {
+      return supabaseResponse
     }
 
     if (pathname === '/login') {

@@ -6,24 +6,18 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Trash2, Save, ChevronDown, ChevronRight, Lock, Unlock, AlertTriangle, KeyRound } from 'lucide-react'
 import type { UserProfile, Permission, Resource, Action, Role } from '@/lib/supabase/types'
-import { ROLE_DEFAULTS } from '@/lib/supabase/types'
 import { cn } from '@/lib/utils'
+import { ROLE_PERMISSION_ACTIONS, ROLE_PERMISSION_RESOURCES, type RolePermissionsMatrix } from '@/lib/role-permissions'
 
 interface Props {
   user: UserProfile
   email: string
   permissions: Permission[]
   currentUserId: string
+  rolePermissions: RolePermissionsMatrix
 }
 
-const RESOURCES: Resource[] = ['incidents', 'tracker', 'documents', 'users', 'admin']
-const RESOURCE_ACTIONS: Record<Resource, Action[]> = {
-  incidents:  ['view', 'view_sensitive', 'create', 'edit', 'delete'],
-  tracker:    ['view', 'view_sensitive', 'create', 'edit', 'delete'],
-  documents:  ['view', 'view_sensitive', 'create', 'edit', 'delete'],
-  users:      ['manage_users', 'manage_invites'],
-  admin:      ['view'],
-}
+const RESOURCES: Resource[] = ROLE_PERMISSION_RESOURCES
 
 type PermMap = Record<string, Record<string, boolean | null>>
 
@@ -36,10 +30,6 @@ function buildPermMap(permissions: Permission[]): PermMap {
   return map
 }
 
-function roleDefault(role: Role, resource: Resource, action: Action): boolean {
-  return ROLE_DEFAULTS[role]?.[resource]?.includes(action) ?? false
-}
-
 function overrideCount(permMap: PermMap, resource: Resource): number {
   return Object.values(permMap[resource] ?? {}).filter(v => v !== null).length
 }
@@ -48,7 +38,7 @@ function totalOverrides(permMap: PermMap): number {
   return RESOURCES.reduce((sum, r) => sum + overrideCount(permMap, r), 0)
 }
 
-export default function UserDetail({ user: initialUser, email, permissions, currentUserId }: Props) {
+export default function UserDetail({ user: initialUser, email, permissions, currentUserId, rolePermissions }: Props) {
   const [user, setUser] = useState(initialUser)
   const [displayName, setDisplayName] = useState(initialUser.display_name)
   const [role, setRole] = useState<Role>(initialUser.role)
@@ -129,7 +119,7 @@ export default function UserDetail({ user: initialUser, email, permissions, curr
 
   async function togglePermission(resource: Resource, action: Action) {
     const current = permMap[resource]?.[action] ?? null
-    const def = roleDefault(user.role, resource, action)
+    const def = rolePermissions[user.role]?.[resource]?.includes(action) ?? false
     let next: boolean | null
     if (current === null) next = !def
     else if (current === true) next = false
@@ -138,7 +128,7 @@ export default function UserDetail({ user: initialUser, email, permissions, curr
   }
 
   async function resetResource(resource: Resource) {
-    const actions = RESOURCE_ACTIONS[resource]
+    const actions = ROLE_PERMISSION_ACTIONS[resource]
     await Promise.all(actions.map(action =>
       supabase.from('permissions').delete().eq('user_id', user.id).eq('resource', resource).eq('action', action)
     ))
@@ -147,7 +137,7 @@ export default function UserDetail({ user: initialUser, email, permissions, curr
   }
 
   async function setResourceAll(resource: Resource, granted: boolean) {
-    const actions = RESOURCE_ACTIONS[resource]
+    const actions = ROLE_PERMISSION_ACTIONS[resource]
     await Promise.all(actions.map(action =>
       supabase.from('permissions').upsert(
         { user_id: user.id, resource, action, granted },
@@ -235,7 +225,7 @@ export default function UserDetail({ user: initialUser, email, permissions, curr
         </div>
         <div className="divide-y divide-zinc-800/60">
           {RESOURCES.map(resource => {
-            const actions = RESOURCE_ACTIONS[resource]
+            const actions = ROLE_PERMISSION_ACTIONS[resource]
             const count = overrideCount(permMap, resource)
             const isOpen = expanded[resource] ?? false
             return (
@@ -258,7 +248,7 @@ export default function UserDetail({ user: initialUser, email, permissions, curr
                   <div className="border-t border-zinc-800/40">
                     {actions.map(action => {
                       const override = permMap[resource]?.[action] ?? null
-                      const def = roleDefault(user.role, resource, action)
+                      const def = rolePermissions[user.role]?.[resource]?.includes(action) ?? false
                       const effective = override !== null ? override : def
                       const isOverride = override !== null
                       const key = `${resource}-${action}`

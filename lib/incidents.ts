@@ -57,8 +57,8 @@ export function normalizeIncidentVisibility(
 export function canViewVisibilityLevel(role: Role, level: FieldVisibilityLevel) {
   if (role === 'admin') return true
   if (level === 'viewer+') return true
+  if (level === 'lawyer+') return role === 'lawyer' || role === 'counsellor'
   if (level === 'counsellor+') return role === 'counsellor'
-  if (level === 'lawyer+') return role === 'lawyer'
   return false
 }
 

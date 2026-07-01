@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import AppShell from '@/components/layout/AppShell'
 import AdminClient from './AdminClient'
 import Link from 'next/link'
+import { parseRolePermissions } from '@/lib/role-permissions'
 
 export default async function AdminPage() {
   const profile = await getProfile()
@@ -34,6 +35,7 @@ export default async function AdminPage() {
   }
 
   const config = Object.fromEntries((configRows ?? []).map(r => [r.key, r.value ?? '']))
+  const rolePermissions = parseRolePermissions(config.role_permissions)
 
   return (
     <AppShell role={profile.role} displayName={profile.display_name}>
@@ -51,6 +53,7 @@ export default async function AdminPage() {
           bans={bans ?? []}
           activityLogs={activityLogs ?? []}
           config={config}
+          rolePermissions={rolePermissions}
         />
       </main>
     </AppShell>

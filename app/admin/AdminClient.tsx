@@ -6,8 +6,10 @@ import { Plus, ChevronRight, UserPlus, Search, Shield, Activity, Settings, Alert
 import Link from 'next/link'
 import type { UserProfile, Role, Ban as BanType, ActivityLog } from '@/lib/supabase/types'
 import { formatDate, formatDateTime } from '@/lib/utils'
+import type { RolePermissionsMatrix } from '@/lib/role-permissions'
+import RolesTab from './RolesTab'
 
-type Tab = 'users' | 'bans' | 'activity' | 'config' | 'lockdown'
+type Tab = 'users' | 'roles' | 'bans' | 'activity' | 'config' | 'lockdown'
 
 interface Props {
   users: UserProfile[]
@@ -16,6 +18,7 @@ interface Props {
   bans: BanType[]
   activityLogs: ActivityLog[]
   config: Record<string, string>
+  rolePermissions: RolePermissionsMatrix
 }
 
 const ROLE_COLORS: Record<Role, string> = {
@@ -27,6 +30,7 @@ const ROLE_COLORS: Record<Role, string> = {
 
 const TAB_ICONS: Record<Tab, ReactNode> = {
   users: <UserPlus className="w-3 h-3" />,
+  roles: <Shield className="w-3 h-3" />,
   bans: <Ban className="w-3 h-3" />,
   activity: <Activity className="w-3 h-3" />,
   config: <Settings className="w-3 h-3" />,
@@ -277,15 +281,16 @@ function FormField({ label, children }: { label: string; children: ReactNode }) 
   return <div className="space-y-1.5"><label className="text-[10px] tracking-widest text-zinc-600 uppercase font-mono">{label}</label>{children}</div>
 }
 
-export default function AdminClient({ users, currentUserId, overrideCounts, bans, activityLogs, config }: Props) {
+export default function AdminClient({ users, currentUserId, overrideCounts, bans, activityLogs, config, rolePermissions }: Props) {
   const [tab, setTab] = useState<Tab>('users')
   const TABS: { id: Tab; label: string }[] = [
     { id: 'users', label: 'Users' },
+    { id: 'roles', label: 'Roles' },
     { id: 'bans', label: 'Bans' },
     { id: 'activity', label: 'Activity' },
     { id: 'config', label: 'Config' },
     { id: 'lockdown', label: 'Lockdown' },
   ]
 
-  return <div className="space-y-6"><style jsx global>{`.admin-input{width:100%;background:#000;border:1px solid rgb(39 39 42);color:rgb(228 228 231);padding:.5rem .75rem;font-size:.875rem;font-family:monospace;outline:none}.admin-input:focus{border-color:rgb(82 82 91)}.admin-button{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border:1px solid rgb(63 63 70);color:rgb(161 161 170);font-size:11px;font-family:monospace;letter-spacing:.1em;text-transform:uppercase;transition:color .15s,border-color .15s}.admin-button:hover{border-color:rgb(113 113 122)}.admin-button:disabled{opacity:.4}`}</style><div className="flex border-b border-zinc-800 overflow-x-auto">{TABS.map(t => <button key={t.id} onClick={() => setTab(t.id)} className={`flex items-center gap-1.5 px-4 py-2.5 text-[11px] font-mono tracking-widest uppercase transition-colors border-b-2 -mb-px shrink-0 ${tab === t.id ? t.id === 'lockdown' ? 'border-red-800 text-red-600' : 'border-zinc-400 text-zinc-300' : 'border-transparent text-zinc-600 hover:text-zinc-400'}`}>{TAB_ICONS[t.id]}{t.label}{t.id === 'lockdown' && config.lockdown_mode === 'true' && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse inline-block" />}</button>)}</div>{tab === 'users' && <UsersTab users={users} currentUserId={currentUserId} overrideCounts={overrideCounts} />}{tab === 'bans' && <BansTab bans={bans} users={users} />}{tab === 'activity' && <ActivityTab logs={activityLogs} />}{tab === 'config' && <ConfigTab config={config} />}{tab === 'lockdown' && <LockdownTab config={config} />}</div>
+  return <div className="space-y-6"><style jsx global>{`.admin-input{width:100%;background:#000;border:1px solid rgb(39 39 42);color:rgb(228 228 231);padding:.5rem .75rem;font-size:.875rem;font-family:monospace;outline:none}.admin-input:focus{border-color:rgb(82 82 91)}.admin-button{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border:1px solid rgb(63 63 70);color:rgb(161 161 170);font-size:11px;font-family:monospace;letter-spacing:.1em;text-transform:uppercase;transition:color .15s,border-color .15s}.admin-button:hover{border-color:rgb(113 113 122)}.admin-button:disabled{opacity:.4}`}</style><div className="flex border-b border-zinc-800 overflow-x-auto">{TABS.map(t => <button key={t.id} onClick={() => setTab(t.id)} className={`flex items-center gap-1.5 px-4 py-2.5 text-[11px] font-mono tracking-widest uppercase transition-colors border-b-2 -mb-px shrink-0 ${tab === t.id ? t.id === 'lockdown' ? 'border-red-800 text-red-600' : 'border-zinc-400 text-zinc-300' : 'border-transparent text-zinc-600 hover:text-zinc-400'}`}>{TAB_ICONS[t.id]}{t.label}{t.id === 'lockdown' && config.lockdown_mode === 'true' && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse inline-block" />}</button>)}</div>{tab === 'users' && <UsersTab users={users} currentUserId={currentUserId} overrideCounts={overrideCounts} />}{tab === 'roles' && <RolesTab initialRolePermissions={rolePermissions} />}{tab === 'bans' && <BansTab bans={bans} users={users} />}{tab === 'activity' && <ActivityTab logs={activityLogs} />}{tab === 'config' && <ConfigTab config={config} />}{tab === 'lockdown' && <LockdownTab config={config} />}</div>
 }

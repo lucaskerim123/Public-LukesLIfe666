@@ -3,15 +3,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 const HOLD_MS = 3000
 
 export default function LockdownDisplay({
   siteName,
   message,
+  isAdmin,
 }: {
   siteName: string
   message: string
+  isAdmin: boolean
 }) {
   const router = useRouter()
 
@@ -21,6 +24,13 @@ export default function LockdownDisplay({
   const startRef = useRef<number | null>(null)
   const rafRef = useRef<number | null>(null)
   const completedRef = useRef(false)
+
+  useEffect(() => {
+    if (!isAdmin) {
+      const supabase = createClient()
+      supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+    }
+  }, [isAdmin])
 
   useEffect(() => {
     return () => {
@@ -213,6 +223,16 @@ export default function LockdownDisplay({
             <p className="mt-4 max-w-md font-mono text-sm leading-7 text-zinc-500">
               {message}
             </p>
+
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => router.push('/dashboard')}
+                className="mt-8 border border-red-800/60 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.28em] text-red-400 transition-colors hover:border-red-500 hover:text-red-200"
+              >
+                Bypass as admin
+              </button>
+            )}
           </div>
         </div>
       </div>

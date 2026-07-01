@@ -1,6 +1,7 @@
 import { createClient } from './supabase/server'
 import type { UserProfile, Resource, Action, Permission } from './supabase/types'
 import { ROLE_DEFAULTS } from './supabase/types'
+import type { RolePermissionsMatrix } from './role-permissions'
 
 export async function getSession() {
   const supabase = await createClient()
@@ -26,13 +27,14 @@ export function can(
   profile: UserProfile,
   overrides: Permission[],
   resource: Resource,
-  action: Action
+  action: Action,
+  roleDefaults: RolePermissionsMatrix = ROLE_DEFAULTS as RolePermissionsMatrix
 ): boolean {
   // Check explicit override first
   const override = overrides.find(p => p.resource === resource && p.action === action)
   if (override) return override.granted
 
   // Fall back to role defaults
-  const rolePerms = ROLE_DEFAULTS[profile.role]
+  const rolePerms = roleDefaults[profile.role]
   return rolePerms[resource]?.includes(action) ?? false
 }
