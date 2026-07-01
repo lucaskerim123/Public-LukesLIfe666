@@ -1,10 +1,8 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import { formatDateTime } from '@/lib/utils'
 import { incidentLabel, visibleIncidentList, visibleIncidentText } from '@/lib/incidents'
 import { sessionLabel } from '@/lib/sessions'
 import type { Document, MentalHealthIncident, Role } from '@/lib/supabase/types'
-
-type AnyRow = Record<string, any>
 
 function text(value: unknown) {
   if (value === null || value === undefined || value === '') return 'Not recorded'
@@ -36,10 +34,6 @@ function empty(label: string) {
 
 function canViewDocument(doc: Document, role: Role, userId: string) {
   return role === 'admin' || (!doc.is_sensitive && (!doc.allowed_user_ids.length || doc.allowed_user_ids.includes(userId)))
-}
-
-function asIncident(row: AnyRow): MentalHealthIncident {
-  return row as MentalHealthIncident
 }
 
 export async function getIncidentReportData(incidentId: string, role: Role, userId: string) {
@@ -76,7 +70,7 @@ export function renderIncidentReportHtml(report: NonNullable<Awaited<ReturnType<
     const visible = canViewDocument(doc, role, userId)
     const label = `Document #${index + 1}`
     if (!visible) return `<article class="card"><p>${esc(`${label}: REDACTED`)}</p><small>${esc(formatDateTime(doc.created_at))}</small></article>`
-    return `<article class="card"><p>${esc(`${label}: ${doc.filename}`)}</p><small>${esc(formatDateTime(doc.created_at))}${doc.is_sensitive ? ' · Sensitive' : ''}</small></article>`
+    return `<article class="card"><p>${esc(`${label}: ${doc.filename}`)}</p><small>${esc(formatDateTime(doc.created_at))}${doc.is_sensitive ? ' - Sensitive' : ''}</small></article>`
   }).join('')
 
   const summary = section('Incident Summary', `
@@ -91,6 +85,7 @@ export function renderIncidentReportHtml(report: NonNullable<Awaited<ReturnType<
       ${kv('Ambulance called', incident.ambulance_called)}
       ${kv('Sectioned', incident.was_sectioned)}
       ${kv('Linked session', trackerSession ? sessionLabel(trackerSession) : 'None')}
+      ${kv('Brief summary', visibleIncidentText(role, incident, 'brief_summary', incident.brief_summary))}
     </div>
   `)
 

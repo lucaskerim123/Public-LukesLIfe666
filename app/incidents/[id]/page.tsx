@@ -1,4 +1,4 @@
-import { redirect, notFound } from 'next/navigation'
+﻿import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getProfile } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
@@ -25,7 +25,7 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
       <main className="max-w-2xl mx-auto px-4 py-8">
         <div className="md:hidden mb-4">
           <Link href="/incidents" className="inline-flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-3 py-2 text-[10px] font-mono tracking-widest uppercase text-zinc-500 hover:border-zinc-700 hover:text-zinc-300 transition-colors">
-            ← Back to incidents
+            Back to incidents
           </Link>
         </div>
         <IncidentDetail
@@ -40,3 +40,4 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
     </AppShell>
   )
 }
+

@@ -5,11 +5,13 @@ begin;
 
 alter table public.mental_health_incidents
   add column if not exists incident_number bigint,
+  add column if not exists brief_summary text,
   add column if not exists location text,
   add column if not exists outcome text,
   add column if not exists professional_note text,
   add column if not exists tracker_session_id uuid references public.drug_tracker_sessions(id) on delete set null,
   add column if not exists field_visibility jsonb not null default jsonb_build_object(
+    'brief_summary', 'viewer+',
     'description', 'viewer+',
     'notes', 'viewer+',
     'personal_notes', 'admin only',

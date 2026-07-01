@@ -4,10 +4,12 @@
 
 alter table mental_health_incidents
   add column if not exists incident_number bigint,
+  add column if not exists brief_summary text,
   add column if not exists location text,
   add column if not exists outcome text,
   add column if not exists professional_note text,
   add column if not exists field_visibility jsonb not null default '{
+    "brief_summary": "viewer+",
     "description": "viewer+",
     "notes": "viewer+",
     "personal_notes": "counsellor+",
