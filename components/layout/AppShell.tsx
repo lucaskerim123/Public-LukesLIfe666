@@ -1,4 +1,5 @@
 import Sidebar from './Sidebar'
+import CaptureGuard from '@/components/security/CaptureGuard'
 
 interface AppShellProps {
   role: string
@@ -9,6 +10,7 @@ interface AppShellProps {
 export default function AppShell({ role, displayName, children }: AppShellProps) {
   return (
     <div className="flex min-h-screen bg-background">
+      <CaptureGuard enabled={role !== 'admin'} />
       <Sidebar role={role} displayName={displayName} />
       {/* Offset for desktop sidebar; offset top for mobile header */}
       <div className="flex-1 min-w-0 md:ml-[220px] pt-12 md:pt-0">
