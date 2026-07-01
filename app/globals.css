@@ -89,6 +89,41 @@ select {
   z-index: 0;
 }
 
+.tracker-detail-page p.text-sm.font-mono.text-zinc-400 {
+  position: relative;
+  min-height: 58px;
+  overflow: hidden;
+  border: 1px solid rgb(39 39 42);
+  background: rgb(0 0 0 / 0.4);
+  padding: 0.75rem;
+  color: transparent;
+}
+
+.tracker-detail-page p.text-sm.font-mono.text-zinc-400::before {
+  content: '';
+  position: absolute;
+  inset: 0.5rem 0.75rem 0.5rem 42%;
+  border: 1px solid rgb(69 10 10 / 0.3);
+  background: rgb(69 10 10 / 0.1);
+  filter: blur(3px);
+}
+
+.tracker-detail-page p.text-sm.font-mono.text-zinc-400::after {
+  content: 'I♡EVELYN-REDACTED-I♡EVELYN';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(185 28 28);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  font-size: 10px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  text-shadow: -7.5em 0 0 rgb(127 29 29 / 0.55), 7.5em 0 0 rgb(127 29 29 / 0.55);
+}
+
 @layer utilities {
   .vault-input {
     @apply w-full max-w-full min-w-0 bg-black border border-zinc-800 text-zinc-200 px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-red-900/60 transition-colors;
