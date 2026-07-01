@@ -5,6 +5,8 @@ import { logActivity } from '@/lib/activity'
 import { isAdminOwner } from '@/lib/admin-owner'
 import type { Role } from '@/lib/supabase/types'
 
+const ADMIN_ASSIGNABLE_ROLES: Role[] = ['viewer', 'lawyer', 'counsellor']
+
 export async function PATCH(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -25,14 +27,18 @@ export async function PATCH(req: NextRequest) {
   const currentUserIsOwner = await isAdminOwner(user.id)
   const targetIsOwner = await isAdminOwner(target.id)
   const roleChanging = target.role !== role
-  const adminRoleChange = target.role === 'admin' || role === 'admin' || target.role === 'owner' || role === 'owner'
 
   if (targetIsOwner) {
     return NextResponse.json({ error: 'The owner account cannot be modified' }, { status: 403 })
   }
-
-  if (adminRoleChange && !currentUserIsOwner) {
-    return NextResponse.json({ error: 'Only the owner can change admin or owner roles' }, { status: 403 })
+  if (user.id === userId && roleChanging) {
+    return NextResponse.json({ error: 'Users cannot change their own role' }, { status: 403 })
+  }
+  if (!currentUserIsOwner && !ADMIN_ASSIGNABLE_ROLES.includes(role)) {
+    return NextResponse.json({ error: 'Admins can only assign viewer, lawyer or counsellor roles' }, { status: 403 })
+  }
+  if (!currentUserIsOwner && target.role === 'admin') {
+    return NextResponse.json({ error: 'Admins cannot edit admin accounts' }, { status: 403 })
   }
 
   const { error } = await admin.from('users').update({ display_name, role }).eq('id', userId)
