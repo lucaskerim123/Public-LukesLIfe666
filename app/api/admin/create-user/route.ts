@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logActivity } from '@/lib/activity'
 import { isAdminOwner } from '@/lib/admin-owner'
+import type { Role } from '@/lib/supabase/types'
+
+const ADMIN_CREATABLE_ROLES: Role[] = ['viewer', 'lawyer', 'counsellor']
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -12,12 +15,20 @@ export async function POST(req: NextRequest) {
   const { data: profile } = await supabase.from('users').select('role, display_name').eq('id', user.id).single()
   if (profile?.role !== 'admin' && profile?.role !== 'owner') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { email, display_name, password, role } = await req.json()
+  const { email, display_name, password, role } = await req.json() as { email?: string; display_name?: string; password?: string; role?: Role }
   if (!email || !display_name || !password || !role) {
     return NextResponse.json({ error: 'All fields required' }, { status: 400 })
   }
-  if ((role === 'admin' || role === 'owner') && !(await isAdminOwner(user.id))) {
-    return NextResponse.json({ error: 'Only the owner can create admin or owner accounts' }, { status: 403 })
+
+  const currentUserIsOwner = await isAdminOwner(user.id)
+  if (!currentUserIsOwner && !ADMIN_CREATABLE_ROLES.includes(role)) {
+    return NextResponse.json({ error: 'Admins can only create viewer, lawyer or counsellor accounts' }, { status: 403 })
+  }
+  if (role === 'owner' && !currentUserIsOwner) {
+    return NextResponse.json({ error: 'Only the owner can create owner accounts' }, { status: 403 })
+  }
+  if (role === 'admin' && !currentUserIsOwner) {
+    return NextResponse.json({ error: 'Only the owner can create admin accounts' }, { status: 403 })
   }
 
   const admin = createAdminClient()
