@@ -244,13 +244,21 @@ export default function LockdownDisplay({
               {message}
             </p>
 
-            {isAdmin && (
+            {isAdmin ? (
               <button
                 type="button"
                 onClick={() => router.push('/dashboard')}
                 className="mt-8 border border-red-800/60 px-4 py-2 text-[10px] font-mono uppercase tracking-[0.28em] text-red-400 transition-colors hover:border-red-500 hover:text-red-200"
               >
                 Bypass as admin
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => router.push('/login')}
+                className="mt-8 text-[9px] font-mono uppercase tracking-[0.32em] text-red-900/80 transition-colors hover:text-red-600"
+              >
+                Authorised sign-in
               </button>
             )}
           </div>
