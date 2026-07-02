@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from './supabase/server'
 import type { UserProfile, Resource, Action, Permission } from './supabase/types'
 import { ROLE_DEFAULTS } from './supabase/types'
@@ -6,13 +7,17 @@ import { parseRolePermissions } from './role-permissions'
 import { createAdminClient } from './supabase/admin'
 import { isAdminOwner } from './admin-owner'
 
+// The auth/permission helpers below are wrapped in React's `cache()` so that a
+// single request (page render + AppShell, which both read profile/permissions)
+// makes one Supabase round-trip per distinct call instead of duplicating them.
+
 export async function getSession() {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   return session
 }
 
-export async function getProfile(): Promise<UserProfile | null> {
+export const getProfile = cache(async (): Promise<UserProfile | null> => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -20,28 +25,28 @@ export async function getProfile(): Promise<UserProfile | null> {
   if (!data) return null
   if (await isAdminOwner(user.id)) return { ...data, role: 'owner' }
   return data
-}
+})
 
-export async function getPermissions(userId: string): Promise<Permission[]> {
+export const getPermissions = cache(async (userId: string): Promise<Permission[]> => {
   const supabase = await createClient()
   const { data } = await supabase.from('permissions').select('*').eq('user_id', userId)
   return data ?? []
-}
+})
 
-export async function getRolePermissions(): Promise<RolePermissionsMatrix> {
+export const getRolePermissions = cache(async (): Promise<RolePermissionsMatrix> => {
   const admin = createAdminClient()
   const { data } = await admin.from('site_config').select('value').eq('key', 'role_permissions').maybeSingle()
   return parseRolePermissions(data?.value ?? null)
-}
+})
 
-export async function getPermissionContext(userId: string) {
+export const getPermissionContext = cache(async (userId: string) => {
   const [overrides, roleDefaults] = await Promise.all([
     getPermissions(userId),
     getRolePermissions(),
   ])
 
   return { overrides, roleDefaults }
-}
+})
 
 export function can(
   profile: UserProfile,

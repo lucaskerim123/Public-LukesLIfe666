@@ -21,10 +21,15 @@ export async function POST(request: NextRequest) {
   const hash = await sha256(pin)
   if (hash !== data.value) return NextResponse.json({ error: 'Incorrect PIN' }, { status: 401 })
 
+  // Advance the session epoch so every session issued before this unlock is
+  // treated as stale: the middleware force-signs them out and the client
+  // heartbeat bounces open tabs back to /login.
+  const now = new Date().toISOString()
   await admin.from('site_config')
     .upsert([
-      { key: 'lockdown_mode', value: 'false', updated_at: new Date().toISOString() },
-      { key: 'lockdown_pin_hash', value: null, updated_at: new Date().toISOString() },
+      { key: 'lockdown_mode', value: 'false', updated_at: now },
+      { key: 'lockdown_pin_hash', value: null, updated_at: now },
+      { key: 'session_epoch', value: Date.now().toString(), updated_at: now },
     ])
 
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined

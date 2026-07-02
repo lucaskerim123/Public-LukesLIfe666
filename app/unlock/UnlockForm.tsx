@@ -20,8 +20,8 @@ export default function UnlockForm() {
     })
     setLoading(false)
     if (res.ok) {
-      router.push('/dashboard')
-      router.refresh()
+      // Unlock invalidates every session (incl. this one) - re-authenticate.
+      router.replace('/login')
     } else {
       const data = await res.json()
       setError(data.error || 'Incorrect PIN')

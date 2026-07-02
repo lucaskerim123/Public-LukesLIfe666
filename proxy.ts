@@ -17,6 +17,22 @@ function getClientIp(request: NextRequest): string {
   )
 }
 
+// Read the `iat` (issued-at, seconds) claim out of a Supabase access token
+// without verifying it - getUser() has already validated the token upstream;
+// here we only need the timestamp to compare against the session epoch.
+function getTokenIssuedAt(token: string): number | null {
+  try {
+    const part = token.split('.')[1]
+    if (!part) return null
+    let b64 = part.replace(/-/g, '+').replace(/_/g, '/')
+    b64 += '='.repeat((4 - (b64.length % 4)) % 4)
+    const payload = JSON.parse(atob(b64))
+    return typeof payload.iat === 'number' ? payload.iat : null
+  } catch {
+    return null
+  }
+}
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -50,11 +66,10 @@ export async function proxy(request: NextRequest) {
   const clientIp = getClientIp(request)
   const now = new Date().toISOString()
 
-  // Run lockdown + IP ban checks in parallel. Only the emergency unlock paths bypass lockdown.
-  const [{ data: lockdownRow }, { data: ipBan }] = await Promise.all([
-    isLockdownExempt
-      ? Promise.resolve({ data: null })
-      : adminClient.from('site_config').select('value').eq('key', 'lockdown_mode').single(),
+  // System config (lockdown state, session epoch, owner id) + IP ban in parallel.
+  const [{ data: configRows }, { data: ipBan }] = await Promise.all([
+    adminClient.from('site_config').select('key, value')
+      .in('key', ['lockdown_mode', 'session_epoch', 'admin_owner_id']),
     clientIp === 'unknown'
       ? Promise.resolve({ data: null })
       : adminClient.from('bans').select('id')
@@ -63,18 +78,20 @@ export async function proxy(request: NextRequest) {
           .maybeSingle(),
   ])
 
+  const config = Object.fromEntries((configRows ?? []).map(r => [r.key, r.value ?? '']))
+  const lockdownActive = config.lockdown_mode === 'true'
+  const sessionEpoch = config.session_epoch ? Number(config.session_epoch) : null
+  const ownerId = config.admin_owner_id || process.env.HIS_USER_ID || null
+
   if (ipBan && pathname !== '/banned') {
     return NextResponse.redirect(new URL('/banned', request.url))
   }
 
-  // Auth check
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = user
-    ? await adminClient.from('users').select('role').eq('id', user.id).maybeSingle()
-    : { data: null as { role?: string | null } | null }
-
   const publicPaths = ['/login', '/join', '/setup', '/api/setup', '/lockdown', '/unlock', '/banned', '/api/lockdown']
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
+
+  // Auth check
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (!user && !isPublic) {
     const next = encodeURIComponent(pathname)
@@ -82,21 +99,38 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user) {
-    // User ban check
-    if (pathname !== '/banned') {
-      const { data: userBan } = await adminClient.from('bans').select('id')
-        .eq('type', 'user').eq('value', user.id)
-        .or(`expires_at.is.null,expires_at.gt.${now}`)
-        .maybeSingle()
-
-      if (userBan) {
-        if (pathname === '/login') return supabaseResponse
-        return NextResponse.redirect(new URL('/banned', request.url))
+    // Force re-login for any session issued before the last unlock. Skip on
+    // public paths (incl. /login) so we never loop while re-authenticating.
+    if (!isPublic && sessionEpoch) {
+      const { data: { session } } = await supabase.auth.getSession()
+      const iat = session?.access_token ? getTokenIssuedAt(session.access_token) : null
+      if (iat !== null && iat * 1000 < sessionEpoch) {
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+        const redirect = NextResponse.redirect(new URL('/login', request.url))
+        supabaseResponse.cookies.getAll().forEach(c => redirect.cookies.set(c))
+        return redirect
       }
     }
 
-    const isAdmin = profile?.role === 'admin'
-    if (!isAdmin && !isLockdownExempt && lockdownRow?.value === 'true') {
+    // Role + user-ban lookups both key on user.id - run them together.
+    const [{ data: profile }, { data: userBan }] = await Promise.all([
+      adminClient.from('users').select('role').eq('id', user.id).maybeSingle(),
+      pathname !== '/banned'
+        ? adminClient.from('bans').select('id')
+            .eq('type', 'user').eq('value', user.id)
+            .or(`expires_at.is.null,expires_at.gt.${now}`)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ])
+
+    if (userBan) {
+      if (pathname === '/login') return supabaseResponse
+      return NextResponse.redirect(new URL('/banned', request.url))
+    }
+
+    // Admins and the owner bypass lockdown; everyone else is sent to /lockdown.
+    const canBypass = profile?.role === 'admin' || profile?.role === 'owner' || (!!ownerId && user.id === ownerId)
+    if (!canBypass && !isLockdownExempt && lockdownActive) {
       return NextResponse.redirect(new URL('/lockdown', request.url))
     }
 
@@ -105,7 +139,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (!user && !isLockdownExempt && lockdownRow?.value === 'true') {
+  if (!user && !isLockdownExempt && lockdownActive) {
     return NextResponse.redirect(new URL('/lockdown', request.url))
   }
 
@@ -113,5 +147,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: ['/((?!api/lockdown/status|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }

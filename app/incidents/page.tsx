@@ -23,6 +23,7 @@ export default async function IncidentsPage() {
     .from('mental_health_incidents')
     .select('*')
     .order('occurred_at', { ascending: false })
+    .limit(200)
 
   return (
     <AppShell userId={profile.id} role={profile.role} displayName={profile.display_name}>
