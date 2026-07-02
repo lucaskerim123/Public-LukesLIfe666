@@ -32,6 +32,16 @@ export async function createMcpContext(): Promise<McpContext> {
   }
 }
 
+export async function createMcpActorContext(): Promise<McpActorContext> {
+  const context = await createMcpContext()
+
+  if (!context.profile) {
+    throw new Error('You must be signed in to run this command')
+  }
+
+  return context as McpActorContext
+}
+
 export function assertCan(
   context: McpContext,
   resource: Resource,
