@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react'
 import Sidebar from './Sidebar'
 import CaptureGuard from '@/components/security/CaptureGuard'
 import FancyRedactedHydrator from '@/components/permissions/FancyRedactedHydrator'
@@ -50,6 +51,13 @@ export default async function AppShell({ userId, role, displayName, children }: 
       <Sidebar role={role} displayName={displayName} lockdownActive={lockdownActive} hasPin={hasPin} canViewAdmin={canViewAdmin} allowedAdminSections={allowedAdminSections} />
       {/* Offset for desktop sidebar; offset top for mobile header */}
       <div className="flex-1 min-w-0 md:ml-[220px] pt-12 md:pt-0">
+        {/* Quiet, persistent reminder that lockdown is on for admins who bypassed. */}
+        {lockdownActive && (
+          <div className="sticky top-12 z-30 flex items-center justify-center gap-2 border-b border-red-900/50 bg-red-950/30 px-4 py-1.5 backdrop-blur-sm md:top-0">
+            <Lock className="h-3 w-3 shrink-0 text-red-600/80" />
+            <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-red-500/90">Lockdown active</span>
+          </div>
+        )}
         {children}
       </div>
     </div>
