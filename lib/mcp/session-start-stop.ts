@@ -18,7 +18,7 @@ export async function startSeshTool(context: McpContext, input?: ToolInput): Pro
   const supabase = await createClient()
   const { data, error } = await supabase.from('drug_tracker_sessions').insert({ user_id: context.profile!.id, date_start: isoDate(at), sleep_hours: 0, notes: 'Session started.', is_sensitive: false, sensitive_fields: [], field_visibility: {} }).select('*').single()
   if (error) throw error
-  await addEvent(data.id, 'session_start', 'Sesh started', 'Session started.', at)
+  await addEvent(data.id, '/startsesh', '/startsesh', '/startsesh', at)
   return ok('startsesh', ['Session started.', `Session: ${sessionLabel(data)}`, `Session ID: ${data.id}`, `Started: ${fmt(at)}`].join('\n'), { session_id: data.id })
 }
 
@@ -37,6 +37,6 @@ export async function stopSeshTool(context: McpContext, input?: ToolInput): Prom
   const supabase = await createClient()
   const { data, error } = await supabase.from('drug_tracker_sessions').update({ date_end: isoDate(at) }).eq('id', session.id).eq('user_id', context.profile!.id).select('*').single()
   if (error) throw error
-  await addEvent(session.id, 'session_stop', 'Sesh stopped', 'Session stopped.', at)
+  await addEvent(session.id, '/stopsesh', '/stopsesh', '/stopsesh', at)
   return ok('stopsesh', ['Session stopped and saved.', '', summary, `Stopped: ${fmt(at)}`].join('\n'), { session_id: data.id })
 }
