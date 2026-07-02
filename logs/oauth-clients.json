@@ -1,0 +1,154 @@
+[
+  {
+    "client_id": "c647a973-e666-400e-ab52-99457fdf0b5f",
+    "client_secret": null,
+    "redirect_uris": [
+      "https://chatgpt.com/connector/oauth/zuDY4CmS4BXh"
+    ],
+    "token_endpoint_auth_method": "none",
+    "client_name": "ChatGPT"
+  },
+  {
+    "client_id": "99331bf4-d6c8-414e-b9b1-bb8d6790fbc2",
+    "client_secret": null,
+    "redirect_uris": [
+      "https://chatgpt.com/connector/oauth/zuDY4CmS4BXh"
+    ],
+    "token_endpoint_auth_method": "none",
+    "client_name": "ChatGPT"
+  },
+  {
+    "client_id": "a836cfd5-d478-4ac6-8cfd-4103a3d80650",
+    "client_secret": "0585c25f00af4a4f83990cfb1b4fe8e1679fbe5913c847b1a86cac9adb4e4088",
+    "redirect_uris": [
+      "https://chatgpt.com/connector/oauth/zuDY4CmS4BXh"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "ChatGPT"
+  },
+  {
+    "client_id": "f475366e-5afb-4206-be89-b4c353ee33f1",
+    "client_secret": "7e39f27fc87543f1a8a1e6e8c1ec77d2ce64f123c0d142a8add8274d784702dc",
+    "redirect_uris": [
+      "https://chatgpt.com/connector/oauth/zuDY4CmS4BXh"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "ChatGPT"
+  },
+  {
+    "client_id": "9e0bb608-19f4-40cd-a3f5-dc2757ff42fd",
+    "client_secret": "1b7ad2ce6c514ecc8dad8ed0c49a048756bf434f4afc450abceff9c15c845b49",
+    "redirect_uris": [
+      "https://chatgpt.com/connector/oauth/zuDY4CmS4BXh"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "ChatGPT"
+  },
+  {
+    "client_id": "64dbcd5b-66f4-477f-9bd2-664a90aef09b",
+    "client_secret": "d07c98a74ccd483cac91652339eaec05f06a8144d82b4554a8d002cf98cf2f3f",
+    "redirect_uris": [
+      "http://127.0.0.1:3333/callback"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "codex-oauth-check"
+  },
+  {
+    "client_id": "afe73cba-a13f-4a6f-a2ce-c217a1383e4c",
+    "client_secret": "2323771e8eda47628319b631b3e338a7dbef44b03fa44240a037b9c8663c2629",
+    "redirect_uris": [
+      "https://chatgpt.com/connector/oauth/zuDY4CmS4BXh"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "ChatGPT"
+  },
+  {
+    "client_id": "e366af76-2d34-464f-b8b3-6b4a86f86cc4",
+    "client_secret": "7e55b006e66c43ba8b0f77139117f35f3bbb0ed8b5fe42e69dcc112908545f90",
+    "redirect_uris": [
+      "http://127.0.0.1:4444/callback"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "codex-state-optional-check"
+  },
+  {
+    "client_id": "66680d2c-ce4a-45c6-91c9-2d0420e74e0b",
+    "client_secret": "78009ae7109047f097088e74a55dc35a9c513cbed8574e13aa00339b844539d5",
+    "redirect_uris": [
+      "http://127.0.0.1:4444/callback"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "codex-state-optional-check-2"
+  },
+  {
+    "client_id": "0491b288-1d35-4bed-a1b3-a4778acabadf",
+    "client_secret": "caff723f2160471b8e28c46f5d3c5ec7e4c8e17768b24a8abce9a9b1a8815059",
+    "redirect_uris": [
+      "https://chat.openai.com/aip/callback"
+    ],
+    "token_endpoint_auth_method": "client_secret_post"
+  },
+  {
+    "client_id": "80db1fe3-e681-471c-8e44-5cfbebcdcef8",
+    "client_secret": "e2bac3d3629a4fd4bfcf1670d5213fc2c63d77cd7a87403ab03db626d6725bed",
+    "redirect_uris": [
+      "https://chatgpt.com/connector/oauth/VMDCLsm4D_gw"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "ChatGPT"
+  },
+  {
+    "client_id": "b02c705f-bb9a-4db3-8db2-88cfd7a81511",
+    "client_secret": "8713c18da6114403b48a05017d20502ec0c1b6764fb94317b669edcafff4d844",
+    "redirect_uris": [
+      "http://127.0.0.1/callback"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "local-test"
+  },
+  {
+    "client_id": "f82db39b-548f-4b9a-a1aa-0a8fcdf06b29",
+    "client_secret": "4f75d9af99b34a8390729f7cfb0a3e9482dab5b48c6e4c49984f1c7a690d97cb",
+    "redirect_uris": [
+      "http://127.0.0.1/callback"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "local-test"
+  },
+  {
+    "client_id": "6633d4da-1b2c-4aa7-8e3e-5f0289597650",
+    "client_secret": "721df4f9cab44372aa7edfa59d44adad6fad53f72dc34a8f9588380d78e65630",
+    "redirect_uris": [
+      "http://127.0.0.1/callback"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "local-test"
+  },
+  {
+    "client_id": "4a8a8a11-b165-4dcf-bbc2-fe2bb9729cde",
+    "client_secret": "544581f6ae434e82986d625d31b66292d7c9edc6d37f4073ac6df539178c2ee0",
+    "redirect_uris": [
+      "http://127.0.0.1/callback"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "local-test"
+  },
+  {
+    "client_id": "acfb6741-c7b1-4701-b31b-96c56bfea3ef",
+    "client_secret": "959d0adc27bc41af9902d25a0408d6c5a24ed4f3f9e244bca4ab58cb667d40ad",
+    "redirect_uris": [
+      "http://127.0.0.1/callback"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "local-test"
+  },
+  {
+    "client_id": "44dd82a3-0856-42cd-9946-a1650669bb0a",
+    "client_secret": "6016cd9af25b4460bab21215b6e205a3229158dc82a84d55a38c1b064068c282",
+    "redirect_uris": [
+      "https://chatgpt.com/connector/oauth/VMDCLsm4D_gw"
+    ],
+    "token_endpoint_auth_method": "client_secret_post",
+    "client_name": "ChatGPT"
+  }
+]

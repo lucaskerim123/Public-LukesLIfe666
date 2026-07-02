@@ -1,0 +1,24 @@
+
+> lukeslife@0.1.0 start
+> next start --port 3000
+
+▲ Next.js 16.2.9
+- Local:         http://localhost:3000
+- Network:       http://10.0.0.4:3000
+✓ Ready in 269ms
+
+> lukeslife@0.1.0 start
+> next start --port 3000
+
+▲ Next.js 16.2.9
+- Local:         http://localhost:3000
+- Network:       http://10.0.0.4:3000
+✓ Ready in 1661ms
+
+> lukeslife@0.1.0 start
+> next start --port 3000
+
+▲ Next.js 16.2.9
+- Local:         http://localhost:3000
+- Network:       http://10.0.0.4:3000
+✓ Ready in 314ms
