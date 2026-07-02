@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createMcpContext } from '@/lib/mcp/context'
 import { exportIncidentTool } from '@/lib/mcp/exportincident-tool'
+import { startSeshTool, stopSeshTool } from '@/lib/mcp/session-start-stop'
+import { seshInfoTool } from '@/lib/mcp/seshinfo-tool'
 import { listMcpTools, runMcpTool, type McpToolRequest } from '@/lib/mcp/tool-registry'
 
 export const runtime = 'nodejs'
@@ -23,12 +25,15 @@ const restoredTools = [
   'help',
 ]
 
-function placeholderTool(tool: string) {
-  return {
-    ok: false,
-    tool,
-    error: `${tool} is listed but its web MCP handler is still being restored.`,
+async function routeTool(tool: string, context: Awaited<ReturnType<typeof createMcpContext>>, input?: Record<string, unknown>) {
+  if (tool === 'exportincident') return exportIncidentTool(context, input)
+  if (tool === 'startsesh') return startSeshTool(context, input)
+  if (tool === 'stopsesh') return stopSeshTool(context, input)
+  if (tool === 'seshinfo') return seshInfoTool(context)
+  if (restoredTools.includes(tool)) {
+    return { ok: false, tool, error: `${tool} is listed but its web MCP handler is still being restored.` }
   }
+  return null
 }
 
 export async function GET() {
@@ -45,29 +50,17 @@ export async function POST(request: Request) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json(
-      { ok: false, error: 'Invalid JSON body' },
-      { status: 400 }
-    )
+    return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 })
   }
 
   if (!body.tool) {
-    return NextResponse.json(
-      { ok: false, error: 'Missing MCP tool name' },
-      { status: 400 }
-    )
+    return NextResponse.json({ ok: false, error: 'Missing MCP tool name' }, { status: 400 })
   }
 
   const context = await createMcpContext()
   const toolName = body.tool.replace(/^\//, '')
-  const result = toolName === 'exportincident'
-    ? await exportIncidentTool(context, body.input)
-    : restoredTools.includes(toolName)
-      ? placeholderTool(toolName)
-      : await runMcpTool(context, {
-        tool: body.tool,
-        input: body.input,
-      } as McpToolRequest)
+  const routed = await routeTool(toolName, context, body.input)
+  const result = routed ?? await runMcpTool(context, { tool: body.tool, input: body.input } as McpToolRequest)
 
   return NextResponse.json(result, { status: result.ok ? 200 : 400 })
 }
