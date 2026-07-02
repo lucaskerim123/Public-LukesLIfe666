@@ -2,9 +2,10 @@ import { can } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { getTrackerReportData } from '@/lib/tracker-report'
 import { sessionLabel } from '@/lib/sessions'
+import { startSeshTool, stopSeshTool } from './session-start-stop'
 import type { McpContext } from './context'
 
-export type McpToolName = 'health_check' | 'seshexport'
+export type McpToolName = 'health_check' | 'seshexport' | 'startsesh' | 'stopsesh'
 
 export interface McpToolRequest {
   tool: string
@@ -173,6 +174,9 @@ const tools: Record<McpToolName, McpToolHandler> = {
       },
     }
   },
+
+  startsesh: startSeshTool,
+  stopsesh: stopSeshTool,
 }
 
 export function listMcpTools(): McpToolName[] {
