@@ -15,3 +15,6 @@ node_modules/
 
 # OS
 .DS_Store
+logs/mcp.stderr.log
+logs/mcp.stdout.log
+*.bat
