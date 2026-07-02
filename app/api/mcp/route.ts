@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createMcpContext } from '@/lib/mcp/context'
+import { exportIncidentTool } from '@/lib/mcp/exportincident-tool'
 import { listMcpTools, runMcpTool, type McpToolRequest } from '@/lib/mcp/tool-registry'
 
 export const runtime = 'nodejs'
@@ -10,7 +11,7 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     name: 'mental-health-tracker-mcp',
-    tools: listMcpTools(),
+    tools: [...listMcpTools(), 'exportincident'],
   })
 }
 
@@ -34,10 +35,13 @@ export async function POST(request: Request) {
   }
 
   const context = await createMcpContext()
-  const result = await runMcpTool(context, {
-    tool: body.tool,
-    input: body.input,
-  } as McpToolRequest)
+  const toolName = body.tool.replace(/^\//, '')
+  const result = toolName === 'exportincident'
+    ? await exportIncidentTool(context, body.input)
+    : await runMcpTool(context, {
+      tool: body.tool,
+      input: body.input,
+    } as McpToolRequest)
 
   return NextResponse.json(result, { status: result.ok ? 200 : 400 })
 }
