@@ -3,6 +3,10 @@ import { createMcpContext } from '@/lib/mcp/context'
 import { exportIncidentTool } from '@/lib/mcp/exportincident-tool'
 import { startSeshTool, stopSeshTool } from '@/lib/mcp/session-start-stop'
 import { seshInfoTool } from '@/lib/mcp/seshinfo-tool'
+import { seshListTool } from '@/lib/mcp/seshlist-tool'
+import { addSleepTool, addNoteTool, logUseTool, moodAddTool, useHistoryTool } from '@/lib/mcp/session-log-tools'
+import { createIncidentTool } from '@/lib/mcp/incident-create-tool'
+import { lockdownTool } from '@/lib/mcp/lockdown-tool'
 import { listMcpTools, runMcpTool, type McpToolRequest } from '@/lib/mcp/tool-registry'
 
 export const runtime = 'nodejs'
@@ -22,7 +26,6 @@ const restoredTools = [
   'usehistory',
   'createincident',
   'lockdown',
-  'help',
 ]
 
 async function routeTool(tool: string, context: Awaited<ReturnType<typeof createMcpContext>>, input?: Record<string, unknown>) {
@@ -30,9 +33,14 @@ async function routeTool(tool: string, context: Awaited<ReturnType<typeof create
   if (tool === 'startsesh') return startSeshTool(context, input)
   if (tool === 'stopsesh') return stopSeshTool(context, input)
   if (tool === 'seshinfo') return seshInfoTool(context)
-  if (restoredTools.includes(tool)) {
-    return { ok: false, tool, error: `${tool} is listed but its web MCP handler is still being restored.` }
-  }
+  if (tool === 'seshlist') return seshListTool(context, input)
+  if (tool === 'addsleep') return addSleepTool(context, input)
+  if (tool === 'moodadd') return moodAddTool(context, input)
+  if (tool === 'addnote') return addNoteTool(context, input)
+  if (tool === 'loguse') return logUseTool(context, input)
+  if (tool === 'usehistory') return useHistoryTool(context, input)
+  if (tool === 'createincident') return createIncidentTool(context, input)
+  if (tool === 'lockdown') return lockdownTool(context, input)
   return null
 }
 

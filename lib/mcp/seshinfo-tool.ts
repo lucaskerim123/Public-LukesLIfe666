@@ -18,11 +18,26 @@ function moodLine(row: Row) {
   return [row.mood, row.notes].filter(Boolean).join(' — ')
 }
 
+function noteText(row: Row) {
+  return row.content ?? row.note ?? null
+}
+
+function useLine(row: Row) {
+  const amount = row.amount !== null && row.amount !== undefined ? `${row.amount} ${row.unit ?? ''}`.trim() : null
+  return [row.substance, amount, row.notes].filter(Boolean).join(' — ')
+}
+
 function incidentLine(role: string, row: MentalHealthIncident) {
   const text = visibleIncidentText(role as any, row, 'brief_summary', row.brief_summary)
     ?? visibleIncidentText(role as any, row, 'description', row.description)
     ?? 'Untitled incident'
   return `${incidentLabel(row)} — ${text}`
+}
+
+function numbered(values: Array<string | null | undefined>) {
+  const clean = values.map(v => v?.trim()).filter(Boolean) as string[]
+  if (!clean.length) return ['No notes recorded.']
+  return clean.map((value, index) => `${index + 1}. ${value}`)
 }
 
 export async function seshInfoTool(context: McpContext): Promise<ToolResult> {
@@ -35,16 +50,27 @@ export async function seshInfoTool(context: McpContext): Promise<ToolResult> {
 
   const supabase = await createClient()
   const role = context.profile!.role
-  const [sleepResult, moodResult, incidentResult] = await Promise.all([
+  const [sleepResult, moodResult, noteResult, entryResult, useResult, incidentResult] = await Promise.all([
     supabase.from('sleep_log').select('*').eq('session_id', session.id).order('logged_at', { ascending: false }).limit(1),
     supabase.from('session_moods').select('*').eq('session_id', session.id).order('occurred_at', { ascending: false }).limit(5),
+    supabase.from('session_notes').select('*').eq('session_id', session.id).order('occurred_at', { ascending: true }).limit(10),
+    supabase.from('tracker_entries').select('*').eq('session_id', session.id).order('created_at', { ascending: true }).limit(10),
+    supabase.from('drug_use_log').select('*').eq('session_id', session.id).order('logged_at', { ascending: false }).limit(5),
     supabase.from('mental_health_incidents').select('*').eq('tracker_session_id', session.id).order('occurred_at', { ascending: true }).limit(10),
   ])
 
   const status = session.date_end ? 'STOPPED' : 'ACTIVE'
   const moods = (moodResult.data ?? []).map(moodLine).filter(Boolean)
+  const sessionNotes = [
+    visibleSessionText(role, session, 'brief_notes', session.brief_notes),
+    visibleSessionText(role, session, 'notes', session.notes),
+    visibleSessionText(role, session, 'private_notes', session.personal_reflection),
+  ]
+  const noteRows = (noteResult.data ?? []).map(noteText)
+  const entryRows = (entryResult.data ?? []).map((row: Row) => row.content ?? null)
+  const notes = numbered([...sessionNotes, ...noteRows, ...entryRows])
+  const useRows = (useResult.data ?? []).map(useLine).filter(Boolean)
   const incidents = ((incidentResult.data ?? []) as MentalHealthIncident[]).map(row => incidentLine(role, row))
-  const generalNote = visibleSessionText(role, session, 'notes', session.notes)
 
   const text = [
     'SESSION INFO',
@@ -62,7 +88,10 @@ export async function seshInfoTool(context: McpContext): Promise<ToolResult> {
     '',
     'Notes:',
     '',
-    generalNote ? `1. ${generalNote}` : 'No notes recorded.',
+    ...notes,
+    '',
+    'Use logged:',
+    ...(useRows.length ? useRows : ['No use logged.']),
     '',
     'Incidents linked:',
     ...(incidents.length ? incidents : ['No incidents linked.']),
@@ -74,6 +103,8 @@ export async function seshInfoTool(context: McpContext): Promise<ToolResult> {
     status,
     sleep_total: session.sleep_hours ?? 0,
     moods: moodResult.data ?? [],
+    notes: [...(noteResult.data ?? []), ...(entryResult.data ?? [])],
+    use_log: useResult.data ?? [],
     incidents: incidentResult.data ?? [],
   })
 }
