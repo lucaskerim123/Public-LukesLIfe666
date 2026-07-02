@@ -7,6 +7,9 @@ const LOCKDOWN_EXEMPT_PATHS = [
   '/unlock',
   '/banned',
   '/api/lockdown',
+  // /login must stay reachable during lockdown so an admin/owner can sign in
+  // and bypass. Non-privileged users who sign in are still bounced to /lockdown.
+  '/login',
 ]
 
 function getClientIp(request: NextRequest): string {
