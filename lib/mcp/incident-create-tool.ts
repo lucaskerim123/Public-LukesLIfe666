@@ -47,7 +47,7 @@ export async function createIncidentTool(context: McpContext, input?: ToolInput)
   }).select('*').single()
 
   if (error) throw error
-  if (session?.id) await addEvent(session.id, 'incident_link', 'Incident created', `Linked ${incidentLabel(data)}.`, occurredAt)
+  if (session?.id) await addEvent(session.id, '/createincident', '/createincident', '/createincident', occurredAt)
 
   return ok('createincident', ['Incident created.', `Incident: ${incidentLabel(data)}`, `Incident ID: ${data.id}`, `Occurred: ${fmt(occurredAt)}`, `Severity: ${severity}/10`, `Description: ${description}`, `Session link: ${session?.id ?? 'none'}`].join('\n'), { incident_id: data.id, incident: incidentLabel(data) })
 }
