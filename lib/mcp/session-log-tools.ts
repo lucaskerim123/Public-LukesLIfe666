@@ -12,6 +12,10 @@ async function requireActiveSession(context: McpContext, tool: string) {
   return { result: null, session }
 }
 
+async function logCommand(sessionId: string, command: string, occurredAt?: string) {
+  await addEvent(sessionId, command, command, command, occurredAt)
+}
+
 export async function addSleepTool(context: McpContext, input?: ToolInput): Promise<ToolResult> {
   const { result, session } = await requireActiveSession(context, 'addsleep')
   if (result) return result
@@ -24,7 +28,7 @@ export async function addSleepTool(context: McpContext, input?: ToolInput): Prom
   await supabase.from('drug_tracker_sessions').update({ sleep_hours: total }).eq('id', session!.id)
   const { data, error } = await supabase.from('sleep_log').insert({ session_id: session!.id, hours_added: hours, source: 'mcp', entry_type: 'sleep', visibility: 'viewer+' }).select('*').single()
   if (error) throw error
-  await addEvent(session!.id, 'sleep', 'Sleep logged', `Added ${hours} hrs sleep.`, data?.logged_at)
+  await logCommand(session!.id, '/addsleep', data?.logged_at)
 
   return ok('addsleep', ['Sleep logged.', `Added: ${hours} hrs`, `Session total: ${total} hrs`, `Session: ${sessionLabel(session!)}`].join('\n'), { session_id: session!.id, hours_added: hours, sleep_total: total })
 }
@@ -41,7 +45,7 @@ export async function moodAddTool(context: McpContext, input?: ToolInput): Promi
   const supabase = await createClient()
   const { error } = await supabase.from('session_moods').insert({ session_id: session!.id, mood, notes, source: 'mcp', entry_type: 'mood', visibility: 'viewer+', occurred_at: at })
   if (error) throw error
-  await addEvent(session!.id, 'mood', 'Mood entry', notes ? `${mood} — ${notes}` : mood, at)
+  await logCommand(session!.id, '/moodadd', at)
 
   return ok('moodadd', ['Mood logged.', `Mood: ${mood}`, notes ? `Notes: ${notes}` : '', `Session: ${sessionLabel(session!)}`].filter(Boolean).join('\n'), { session_id: session!.id, mood })
 }
@@ -59,7 +63,7 @@ export async function addNoteTool(context: McpContext, input?: ToolInput): Promi
   const supabase = await createClient()
   const { error } = await supabase.from('session_notes').insert({ session_id: session!.id, note: content, content, source: 'mcp', entry_type: 'note', visibility, is_sensitive: sensitive, occurred_at: at })
   if (error) throw error
-  await addEvent(session!.id, 'note', 'Note', content, at)
+  await logCommand(session!.id, '/addnote', at)
 
   return ok('addnote', ['Note added.', `Note: ${content}`, `Session: ${sessionLabel(session!)}`].join('\n'), { session_id: session!.id })
 }
@@ -78,7 +82,7 @@ export async function logUseTool(context: McpContext, input?: ToolInput): Promis
   const { data, error } = await supabase.from('drug_use_log').insert({ session_id: session!.id, substance, amount, unit, notes, source: 'mcp', entry_type: 'usage', visibility: 'viewer+' }).select('*').single()
   if (error) throw error
   const amountText = amount !== null ? `${amount} ${unit ?? ''}`.trim() : 'not recorded'
-  await addEvent(session!.id, 'usage', 'Usage log', `${substance} — ${amountText}${notes ? ` — ${notes}` : ''}`, data?.logged_at)
+  await logCommand(session!.id, '/loguse', data?.logged_at)
 
   return ok('loguse', ['Use logged.', `Substance: ${substance}`, `Amount: ${amountText}`, notes ? `Notes: ${notes}` : '', `Logged at: ${fmt(data?.logged_at)}`].filter(Boolean).join('\n'), { session_id: session!.id, log_id: data?.id })
 }
@@ -91,6 +95,8 @@ export async function useHistoryTool(context: McpContext, input?: ToolInput): Pr
   const supabase = await createClient()
   const { data: session } = await supabase.from('drug_tracker_sessions').select('*').eq('user_id', context.profile!.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
   if (!session) return fail('usehistory', 'No session found.')
+
+  await logCommand(session.id, '/usehistory')
 
   const limit = inputNumber(input, 'limit') ?? 20
   const { data, error } = await supabase.from('drug_use_log').select('*').eq('session_id', session.id).order('logged_at', { ascending: false }).limit(limit)
