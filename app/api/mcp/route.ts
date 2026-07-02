@@ -7,11 +7,35 @@ export const runtime = 'nodejs'
 
 type McpRouteBody = Partial<McpToolRequest>
 
+const restoredTools = [
+  'exportincident',
+  'startsesh',
+  'stopsesh',
+  'seshinfo',
+  'seshlist',
+  'addsleep',
+  'moodadd',
+  'addnote',
+  'loguse',
+  'usehistory',
+  'createincident',
+  'lockdown',
+  'help',
+]
+
+function placeholderTool(tool: string) {
+  return {
+    ok: false,
+    tool,
+    error: `${tool} is listed but its web MCP handler is still being restored.`,
+  }
+}
+
 export async function GET() {
   return NextResponse.json({
     ok: true,
     name: 'mental-health-tracker-mcp',
-    tools: [...listMcpTools(), 'exportincident'],
+    tools: Array.from(new Set([...listMcpTools(), ...restoredTools])),
   })
 }
 
@@ -38,10 +62,12 @@ export async function POST(request: Request) {
   const toolName = body.tool.replace(/^\//, '')
   const result = toolName === 'exportincident'
     ? await exportIncidentTool(context, body.input)
-    : await runMcpTool(context, {
-      tool: body.tool,
-      input: body.input,
-    } as McpToolRequest)
+    : restoredTools.includes(toolName)
+      ? placeholderTool(toolName)
+      : await runMcpTool(context, {
+        tool: body.tool,
+        input: body.input,
+      } as McpToolRequest)
 
   return NextResponse.json(result, { status: result.ok ? 200 : 400 })
 }
