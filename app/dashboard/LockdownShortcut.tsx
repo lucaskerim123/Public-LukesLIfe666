@@ -64,7 +64,8 @@ export default function LockdownShortcut({ hasPin, active }: Props) {
     setPin('')
     setShowPinPrompt(false)
     toast.success('Lockdown disabled.')
-    router.refresh()
+    // Unlock invalidates every session (incl. this one) - re-authenticate.
+    router.replace('/login')
   }
 
   return (

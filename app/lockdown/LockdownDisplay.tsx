@@ -32,6 +32,26 @@ export default function LockdownDisplay({
     }
   }, [isAdmin])
 
+  // While the lock screen is open, watch for the site being unlocked and send
+  // everyone to /login so a fresh login is required once access is restored.
+  useEffect(() => {
+    let cancelled = false
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch('/api/lockdown/status', { cache: 'no-store' })
+        if (!res.ok) return
+        const data: { lockdown: boolean } = await res.json()
+        if (!cancelled && !data.lockdown) router.replace('/login')
+      } catch {
+        // ignore transient network errors
+      }
+    }, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+  }, [router])
+
   useEffect(() => {
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)

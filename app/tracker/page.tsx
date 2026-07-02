@@ -18,6 +18,7 @@ export default async function TrackerPage() {
     .from('drug_tracker_sessions')
     .select('*')
     .order('date_start', { ascending: false })
+    .limit(200)
 
   const canCreateTracker = can(profile, overrides, 'tracker', 'create', roleDefaults)
 

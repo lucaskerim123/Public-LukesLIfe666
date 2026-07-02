@@ -13,6 +13,7 @@ export default async function DocumentsPage() {
     .from('documents')
     .select('*')
     .order('created_at', { ascending: false })
+    .limit(200)
 
   const canViewSensitive = profile.role !== 'viewer'
   const isAdmin = profile.role === 'admin'
